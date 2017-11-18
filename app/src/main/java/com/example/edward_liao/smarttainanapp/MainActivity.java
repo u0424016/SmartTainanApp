@@ -63,12 +63,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void setButton_children(View view) {
+        finish();
         Intent children = new Intent(this, CheckedActivity.class);
         startActivity(children);
 
     }
 
     public void setButton_parents(View view) {
+        finish();
         Intent parents = new Intent(this, CheckActivity.class);
         startActivity(parents);
     }

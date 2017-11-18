@@ -33,6 +33,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -87,9 +88,11 @@ public class CheckedActivity extends AppCompatActivity {
 
     private GoogleApiClient client;
 
-    private Button button_check;
+    private Button button_check, button_main;
     private TextView textView;
     private ImageView success;
+
+    String Demo_MacAddress = "00:17:53:9D:BA:AF";
 
 
     @Override
@@ -97,6 +100,8 @@ public class CheckedActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checked);
 
+
+        button_main = (Button) findViewById(R.id.button_main);
         button_check = (Button) findViewById(R.id.button_check);
         textView = (TextView) findViewById(R.id.textview);
         success = (ImageView) findViewById(R.id.imageView2);
@@ -126,16 +131,17 @@ public class CheckedActivity extends AppCompatActivity {
             if (result.getDevice().getAddress().toString().equals(Demo_MacAddress)) {
                 connectNO = deviceIndex;
                 connectToDeviceSelected();
-                textView.setText("已連結");
                 stopScanning();
             } else {
+
+
                 deviceIndex++;
             }
+
+
         }
     };
 
-
-    String Demo_MacAddress = "00:17:53:9D:BA:AF";
 
     // Device connect call back
     private final BluetoothGattCallback btleGattCallback = new BluetoothGattCallback() {
@@ -303,13 +309,26 @@ public class CheckedActivity extends AppCompatActivity {
 //        如果掃描到與QRcode相同的
         if (temp.equals(Demo_MacAddress)) {
 
+            textView.setText("已抵達學校");
+
             success.setVisibility(View.VISIBLE);
 
             toServer();
 
+            bluetoothGatt.disconnect();
+
+
         } else {
+
             textView.setText("請重新確認");
+            toServer_error();
         }
+
+        if (textView.getText().toString().equals("已抵達學校")) {
+            button_check.setVisibility(View.INVISIBLE);
+
+        }
+
 
     }
 
@@ -354,6 +373,13 @@ public class CheckedActivity extends AppCompatActivity {
         startScanning();
     }
 
+    public void setButton_main(View view) {
+
+        finish();
+        Intent back = new Intent (this, MainActivity.class);
+        startActivity(back);
+    }
+
     public void toServer() {
 
 
@@ -367,7 +393,7 @@ public class CheckedActivity extends AppCompatActivity {
                 try {
                     //建立要傳送的JSON物件
                     JSONObject json = new JSONObject();
-                    json.put("ID", "3");
+                    json.put("ID", "1");
                     json.put("Place", "Tainan");
 
 
@@ -405,6 +431,53 @@ public class CheckedActivity extends AppCompatActivity {
         }.execute(null, null, null);
 
     }
+
+    public void toServer_error() {
+
+
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                // TODO Auto-generated method stub
+
+                try {
+
+
+                    //建立POST Request
+                    HttpClient httpClient = new DefaultHttpClient();
+                    HttpGet get = new HttpGet("http://163.18.2.157:8777/back/1");
+
+
+                    //執行Get
+                    HttpResponse httpResponse = httpClient.execute(get);
+                    //取得回傳的內容
+                    HttpEntity httpEntity = httpResponse.getEntity();
+                    String responseString = EntityUtils.toString(httpEntity, "UTF-8");
+                    //回傳的內容轉存為JSON物件
+                    JSONObject responseJSON = new JSONObject(responseString);
+                    //取得Balance的屬性
+
+                    String status = responseJSON.getString("Status");
+
+
+                    System.out.println(status);
+                    System.out.println(status);
+                    System.out.println(status);
+                    System.out.println(status);
+
+
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }.execute(null, null, null);
+
+
+    }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
